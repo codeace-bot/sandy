@@ -7,6 +7,18 @@ app_license = "mit"
 
 # Apps
 # ------------------
+fixtures = [
+    {
+        "doctype": "Custom Field",
+        "filters": {
+            "name": ["in", [
+                "BOM-custom_item_template",
+                "BOM-custom_is_template"
+            ]]
+        }
+    }
+]
+
 
 # required_apps = []
 
