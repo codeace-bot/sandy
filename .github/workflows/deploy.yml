@@ -5,7 +5,6 @@ on:
     branches:
       - main
 
-# Prevent overlapping deployments
 concurrency:
   group: deployment-${{ github.repository }}
   cancel-in-progress: false
@@ -38,21 +37,27 @@ jobs:
           echo "🔍 Validating configuration..."
           MISSING=false
 
-          # Check required secrets
-          for SECRET in SSH_PRIVATE_KEY SSH_USER SSH_HOST; do
-            if [ -z "${{ secrets[$SECRET] }}" ]; then
-              echo "❌ Missing secret: $SECRET"
-              MISSING=true
-            fi
-          done
+          # Validate secrets
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "❌ Missing secret: SSH_PRIVATE_KEY"; MISSING=true
+          fi
+          if [ -z "${{ secrets.SSH_USER }}" ]; then
+            echo "❌ Missing secret: SSH_USER"; MISSING=true
+          fi
+          if [ -z "${{ secrets.SSH_HOST }}" ]; then
+            echo "❌ Missing secret: SSH_HOST"; MISSING=true
+          fi
 
-          # Check required variables
-          for VAR in SITE BENCH_PATH DEPLOY_SCRIPT_PATH; do
-            if [ -z "${{ vars[$VAR] }}" ]; then
-              echo "❌ Missing variable: $VAR"
-              MISSING=true
-            fi
-          done
+          # Validate variables
+          if [ -z "${{ vars.SITE }}" ]; then
+            echo "❌ Missing variable: SITE"; MISSING=true
+          fi
+          if [ -z "${{ vars.BENCH_PATH }}" ]; then
+            echo "❌ Missing variable: BENCH_PATH"; MISSING=true
+          fi
+          if [ -z "${{ vars.DEPLOY_SCRIPT_PATH }}" ]; then
+            echo "❌ Missing variable: DEPLOY_SCRIPT_PATH"; MISSING=true
+          fi
 
           if [ "$MISSING" = true ]; then
             echo "🚫 Deployment aborted: missing configuration."
