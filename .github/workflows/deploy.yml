@@ -27,12 +27,47 @@ jobs:
           echo "Triggered by: ${{ github.actor }}"
           echo "========================================="
       
+      - name: 🧩 Validate Secrets
+        run: |
+          echo "🔍 Validating secrets..."
+          
+          MISSING=false
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "❌ Missing secret: SSH_PRIVATE_KEY"
+            MISSING=true
+          fi
+          if [ -z "${{ secrets.SSH_USER }}" ]; then
+            echo "❌ Missing secret: SSH_USER"
+            MISSING=true
+          fi
+          if [ -z "${{ secrets.SSH_HOST }}" ]; then
+            echo "❌ Missing secret: SSH_HOST"
+            MISSING=true
+          fi
+
+          if [ "$MISSING" = true ]; then
+            echo "========================================="
+            echo "🚫 Deployment aborted: Missing required secrets."
+            echo "Please check repository settings → Secrets → Actions"
+            echo "========================================="
+            exit 1
+          fi
+
+          echo "✅ All required secrets are present."
+      
       - name: 🔑 Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+          echo "📡 Adding SSH host to known_hosts..."
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || {
+            echo "❌ Failed to scan SSH host key for ${{ secrets.SSH_HOST }}"
+            exit 1
+          }
+          
+          echo "✅ SSH configuration complete."
       
       - name: 🚀 Deploy Application
         run: |
