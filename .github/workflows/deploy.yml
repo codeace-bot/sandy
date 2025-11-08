@@ -5,7 +5,7 @@ on:
     branches:
       - main
 
-# Prevent concurrent deployments
+# Prevent overlapping deployments
 concurrency:
   group: deployment-${{ github.repository }}
   cancel-in-progress: false
@@ -13,93 +13,115 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     env:
       APP_NAME: ${{ github.event.repository.name }}
-    
+      SITE: ${{ vars.SITE }}
+      BENCH_PATH: ${{ vars.BENCH_PATH }}
+      DEPLOY_SCRIPT_PATH: ${{ vars.DEPLOY_SCRIPT_PATH }}
+
     steps:
       - name: 📋 Deployment Information
         run: |
           echo "========================================="
-          echo "Deploying: ${{ env.APP_NAME }}"
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Commit: ${{ github.sha }}"
-          echo "Triggered by: ${{ github.actor }}"
+          echo "📦 Deploying: ${{ env.APP_NAME }}"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "🔢 Commit: ${{ github.sha }}"
+          echo "👤 Triggered by: ${{ github.actor }}"
+          echo "🌐 Site: ${{ env.SITE }}"
+          echo "🧱 Bench Path: ${{ env.BENCH_PATH }}"
+          echo "📜 Script Path: ${{ env.DEPLOY_SCRIPT_PATH }}"
           echo "========================================="
-      
-      - name: 🧩 Validate Secrets
+
+      - name: 🧩 Validate Secrets & Variables
         run: |
-          echo "🔍 Validating secrets..."
-          
+          echo "🔍 Validating configuration..."
           MISSING=false
-          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
-            echo "❌ Missing secret: SSH_PRIVATE_KEY"
-            MISSING=true
-          fi
-          if [ -z "${{ secrets.SSH_USER }}" ]; then
-            echo "❌ Missing secret: SSH_USER"
-            MISSING=true
-          fi
-          if [ -z "${{ secrets.SSH_HOST }}" ]; then
-            echo "❌ Missing secret: SSH_HOST"
-            MISSING=true
-          fi
+
+          # Check required secrets
+          for SECRET in SSH_PRIVATE_KEY SSH_USER SSH_HOST; do
+            if [ -z "${{ secrets[$SECRET] }}" ]; then
+              echo "❌ Missing secret: $SECRET"
+              MISSING=true
+            fi
+          done
+
+          # Check required variables
+          for VAR in SITE BENCH_PATH DEPLOY_SCRIPT_PATH; do
+            if [ -z "${{ vars[$VAR] }}" ]; then
+              echo "❌ Missing variable: $VAR"
+              MISSING=true
+            fi
+          done
 
           if [ "$MISSING" = true ]; then
-            echo "========================================="
-            echo "🚫 Deployment aborted: Missing required secrets."
-            echo "Please check repository settings → Secrets → Actions"
-            echo "========================================="
+            echo "🚫 Deployment aborted: missing configuration."
             exit 1
           fi
 
-          echo "✅ All required secrets are present."
-      
-      - name: 🔑 Setup SSH
+          echo "✅ All secrets and variables verified successfully."
+
+      - name: 🔑 Setup SSH Access
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-          echo "📡 Adding SSH host to known_hosts..."
-          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || {
-            echo "❌ Failed to scan SSH host key for ${{ secrets.SSH_HOST }}"
+          echo "📡 Scanning and adding host key..."
+          if ! ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "❌ Failed to add SSH host key for ${{ secrets.SSH_HOST }}"
             exit 1
-          }
-          
-          echo "✅ SSH configuration complete."
-      
+          fi
+
+          echo "✅ SSH setup complete."
+
       - name: 🚀 Deploy Application
         run: |
-          echo "Starting deployment for ${{ env.APP_NAME }}..."
-          
+          echo "========================================="
+          echo "🚀 Starting deployment for ${{ env.APP_NAME }}..."
+          echo "========================================="
+
           ssh -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=no \
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-              "sudo -u frappe /home/frappe/frappe-bench/deploy.sh ${{ env.APP_NAME }}"
-          
-          echo "Deployment completed"
-      
-      - name: 🧹 Cleanup
+              "sudo -u frappe bash '${{ env.DEPLOY_SCRIPT_PATH }}' '${{ env.APP_NAME }}' '${{ env.SITE }}' '${{ env.BENCH_PATH }}'"
+
+          echo "✅ Remote deployment completed successfully."
+
+      - name: 🧾 Fetch Remote Logs (on failure)
+        if: failure()
+        run: |
+          echo "📥 Attempting to fetch remote deployment log..."
+          ssh -i ~/.ssh/deploy_key \
+              -o StrictHostKeyChecking=no \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+              "tail -n 50 '${{ env.BENCH_PATH }}/logs/deploy.log' || echo 'No log file found.'"
+
+      - name: 🧹 Cleanup SSH Key
         if: always()
         run: |
+          echo "🧹 Cleaning up SSH keys..."
           rm -f ~/.ssh/deploy_key
-      
+
       - name: ✅ Success Notification
         if: success()
         run: |
           echo "========================================="
           echo "✅ Deployment Successful!"
-          echo "App: ${{ env.APP_NAME }}"
-          echo "Time: $(date)"
+          echo "📦 App: ${{ env.APP_NAME }}"
+          echo "🌐 Site: ${{ env.SITE }}"
+          echo "🧱 Bench: ${{ env.BENCH_PATH }}"
+          echo "🕒 Time: $(date)"
           echo "========================================="
-      
+
       - name: ❌ Failure Notification
         if: failure()
         run: |
           echo "========================================="
           echo "❌ Deployment Failed!"
-          echo "App: ${{ env.APP_NAME }}"
-          echo "Please check the logs above for details"
+          echo "📦 App: ${{ env.APP_NAME }}"
+          echo "🌐 Site: ${{ env.SITE }}"
+          echo "🧱 Bench: ${{ env.BENCH_PATH }}"
+          echo "⚠️ Please check the logs above for details."
           echo "========================================="
           exit 1
