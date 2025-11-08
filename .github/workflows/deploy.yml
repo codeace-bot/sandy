@@ -5,6 +5,7 @@ on:
     branches:
       - main
 
+# Prevent overlapping deployments
 concurrency:
   group: deployment-${{ github.repository }}
   cancel-in-progress: false
@@ -18,6 +19,7 @@ jobs:
       SITE: ${{ vars.SITE }}
       BENCH_PATH: ${{ vars.BENCH_PATH }}
       DEPLOY_SCRIPT_PATH: ${{ vars.DEPLOY_SCRIPT_PATH }}
+      SSH_USER: ${{ vars.SSH_USER }}
 
     steps:
       - name: 📋 Deployment Information
@@ -30,6 +32,7 @@ jobs:
           echo "🌐 Site: ${{ env.SITE }}"
           echo "🧱 Bench Path: ${{ env.BENCH_PATH }}"
           echo "📜 Script Path: ${{ env.DEPLOY_SCRIPT_PATH }}"
+          echo "👤 SSH User: ${{ env.SSH_USER }}"
           echo "========================================="
 
       - name: 🧩 Validate Secrets & Variables
@@ -40,9 +43,6 @@ jobs:
           # Validate secrets
           if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
             echo "❌ Missing secret: SSH_PRIVATE_KEY"; MISSING=true
-          fi
-          if [ -z "${{ secrets.SSH_USER }}" ]; then
-            echo "❌ Missing secret: SSH_USER"; MISSING=true
           fi
           if [ -z "${{ secrets.SSH_HOST }}" ]; then
             echo "❌ Missing secret: SSH_HOST"; MISSING=true
@@ -57,6 +57,9 @@ jobs:
           fi
           if [ -z "${{ vars.DEPLOY_SCRIPT_PATH }}" ]; then
             echo "❌ Missing variable: DEPLOY_SCRIPT_PATH"; MISSING=true
+          fi
+          if [ -z "${{ vars.SSH_USER }}" ]; then
+            echo "❌ Missing variable: SSH_USER"; MISSING=true
           fi
 
           if [ "$MISSING" = true ]; then
@@ -88,7 +91,7 @@ jobs:
 
           ssh -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=no \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+              ${{ env.SSH_USER }}@${{ secrets.SSH_HOST }} \
               "sudo -u frappe bash '${{ env.DEPLOY_SCRIPT_PATH }}' '${{ env.APP_NAME }}' '${{ env.SITE }}' '${{ env.BENCH_PATH }}'"
 
           echo "✅ Remote deployment completed successfully."
@@ -99,7 +102,7 @@ jobs:
           echo "📥 Attempting to fetch remote deployment log..."
           ssh -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=no \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+              ${{ env.SSH_USER }}@${{ secrets.SSH_HOST }} \
               "tail -n 50 '${{ env.BENCH_PATH }}/logs/deploy.log' || echo 'No log file found.'"
 
       - name: 🧹 Cleanup SSH Key
