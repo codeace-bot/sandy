@@ -4,7 +4,7 @@ Sandy
 
 ### Installation
 
-You can install this app using the [bench](https://github.com/frappe/bench) CLI:
+You can install this app using the [bench](https://github.com/frappe/bench) CLI
 
 ```bash
 cd $PATH_TO_YOUR_BENCH
