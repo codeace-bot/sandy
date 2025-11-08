@@ -1,0 +1,70 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - main
+
+# Prevent concurrent deployments
+concurrency:
+  group: deployment-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    env:
+      APP_NAME: ${{ github.event.repository.name }}
+    
+    steps:
+      - name: 📋 Deployment Information
+        run: |
+          echo "========================================="
+          echo "Deploying: ${{ env.APP_NAME }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "========================================="
+      
+      - name: 🔑 Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: 🚀 Deploy Application
+        run: |
+          echo "Starting deployment for ${{ env.APP_NAME }}..."
+          
+          ssh -i ~/.ssh/deploy_key \
+              -o StrictHostKeyChecking=no \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+              "sudo -u frappe /home/frappe/frappe-bench/deploy.sh ${{ env.APP_NAME }}"
+          
+          echo "Deployment completed"
+      
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/deploy_key
+      
+      - name: ✅ Success Notification
+        if: success()
+        run: |
+          echo "========================================="
+          echo "✅ Deployment Successful!"
+          echo "App: ${{ env.APP_NAME }}"
+          echo "Time: $(date)"
+          echo "========================================="
+      
+      - name: ❌ Failure Notification
+        if: failure()
+        run: |
+          echo "========================================="
+          echo "❌ Deployment Failed!"
+          echo "App: ${{ env.APP_NAME }}"
+          echo "Please check the logs above for details"
+          echo "========================================="
+          exit 1
