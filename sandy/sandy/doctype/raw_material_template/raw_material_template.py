@@ -37,26 +37,3 @@ def get_item_rate_for_bom(item_code, qty=1):
                 rate = 0  # fallback
 
     return flt(rate)
-
-
-@frappe.whitelist()
-def get_item_details_for_bom(item_code, bom_no=None, company=None, qty=1):
-    from frappe.utils import flt
-    item = frappe.get_doc("Item", item_code)
-
-    # Fetch rate using fallback logic
-    rate = item.valuation_rate or \
-           frappe.get_value("Item Price", {"item_code": item_code, "price_list": "Standard Buying"}, "price_list_rate") or \
-           frappe.get_value("Item", item_code, "last_purchase_rate") or 0
-
-    amount = flt(rate) * flt(qty)
-
-    return {
-        "item_name": item.item_name,
-        "description": item.description or item.item_name,
-        "stock_uom": item.stock_uom,
-        "uom": item.stock_uom,
-        "conversion_factor": 1,
-        "rate": rate,
-        "amount": amount
-    }
