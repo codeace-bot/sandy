@@ -16,6 +16,12 @@ fixtures = [
                 "BOM-custom_is_template"
             ]]
         }
+    },
+    {
+        "doctype": "Client Script",
+        "filters": {
+            "dt": ["=", "BOM"]
+        }
     }
 ]
 
