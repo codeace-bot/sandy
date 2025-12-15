@@ -1,70 +1,52 @@
-
 frappe.ui.form.on('Raw Material Template', {
-    refresh: function(frm) {
-        // nothing needed here
-    }
+    refresh(frm) { }
 });
 
 frappe.ui.form.on('BOM Item', {
-    item_code: function(frm, cdt, cdn) {
-        let row = locals[cdt][cdn];
+    item_code(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
         if (!row.item_code) return;
 
-        // Fetch Item Details (UOM, Description)
+        // STEP 1: Fetch basic item details
         frappe.call({
             method: "frappe.client.get",
             args: {
                 doctype: "Item",
                 name: row.item_code
             },
-            callback: function(r) {
-                if (r.message) {
-                    frappe.model.set_value(cdt, cdn, "uom", r.message.stock_uom);
-                    frappe.model.set_value(cdt, cdn, "description", r.message.description || r.message.item_name);
+            callback(r) {
+                if (!r.message) return;
 
-                    if (!row.qty) {
-                        frappe.model.set_value(cdt, cdn, "qty", 1);
+                let item = r.message;
+
+                frappe.model.set_value(cdt, cdn, "item_name", item.item_name);
+                frappe.model.set_value(cdt, cdn, "description", item.description || item.item_name);
+                frappe.model.set_value(cdt, cdn, "stock_uom", item.stock_uom);
+                frappe.model.set_value(cdt, cdn, "uom", item.stock_uom);
+                frappe.model.set_value(cdt, cdn, "conversion_factor", 1);
+
+                if (!row.qty) {
+                    frappe.model.set_value(cdt, cdn, "qty", 1);
+                }
+
+                // STEP 2: Fetch rate based on BOM's Rate of Materials setting
+                frappe.call({
+                    method: "sandy.sandy.doctype.raw_material_template.raw_material_template.get_item_rate_for_bom",
+                    args: {
+                        item_code: row.item_code,
+                        qty: row.qty || 1
+                    },
+                    callback(r) {
+                        let rate = r.message || 0;
+                        frappe.model.set_value(cdt, cdn, "rate", rate);
+                        frappe.model.set_value(cdt, cdn, "amount", flt(rate) * flt(row.qty || 1));
                     }
-                }
-            }
-        });
-
-        // Fetch Buying Rate from Item Price
-        frappe.call({
-            method: "frappe.client.get_list",
-            args: {
-                doctype: "Item Price",
-                filters: {
-                    item_code: row.item_code,
-                    buying: 1
-                },
-                fields: ["price_list_rate"],
-                limit: 1
-            },
-            callback: function(r) {
-                if (r.message?.length) {
-                    frappe.model.set_value(cdt, cdn, "rate", r.message[0].price_list_rate);
-                    frappe.model.set_value(cdt, cdn, "amount", flt(row.qty) * flt(r.message[0].price_list_rate));
-                } else {
-                    // Fallback to Valuation Rate
-                    frappe.call({
-                        method: "frappe.client.get_value",
-                        args: {
-                            doctype: "Item",
-                            filters: { name: row.item_code },
-                            fieldname: "valuation_rate"
-                        },
-                        callback(val) {
-                            let rate = val.message?.valuation_rate || 0;
-                            frappe.model.set_value(cdt, cdn, "rate", rate);
-                            frappe.model.set_value(cdt, cdn, "amount", flt(row.qty) * flt(rate));
-                        }
-                    });
-                }
+                });
             }
         });
     },
 
+    // Recalculate amount if qty or rate changes
     qty(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         frappe.model.set_value(cdt, cdn, "amount", flt(row.qty) * flt(row.rate));
@@ -75,5 +57,3 @@ frappe.ui.form.on('BOM Item', {
         frappe.model.set_value(cdt, cdn, "amount", flt(row.qty) * flt(row.rate));
     }
 });
-
-

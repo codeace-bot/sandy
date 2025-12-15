@@ -1,0 +1,13 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "BOM",
+  "enabled": 1,
+  "modified": "2025-12-12 13:41:55.377134",
+  "module": "Sandy",
+  "name": "BOM main template",
+  "script": "frappe.ui.form.on(\"BOM\", {\r\n    custom_item_template: async function (frm) {\r\n        if (!frm.doc.custom_item_template) return;\r\n\r\n        // 1️⃣ Fetch template\r\n        let template = await frappe.call({\r\n            method: \"frappe.client.get\",\r\n            args: {\r\n                doctype: \"Raw Material Template\",\r\n                name: frm.doc.custom_item_template,\r\n            },\r\n        });\r\n\r\n        if (!template.message) return;\r\n\r\n        frm.clear_table(\"items\");\r\n\r\n        // 2️⃣ SEQUENTIAL processing (fixes missing UOM/rate)\r\n        for (const tpl of template.message.items || []) {\r\n            let row = frm.add_child(\"items\");\r\n            row.item_code = tpl.item_code;\r\n            row.qty = tpl.qty || 1;\r\n\r\n            // 3️⃣ Fetch ERPNext standard item details — sequential & stable\r\n            let resp = await frappe.call({\r\n                method: \"erpnext.manufacturing.doctype.bom.bom.get_item_details\",\r\n                args: {\r\n                    item_code: row.item_code,\r\n                    bom_no: frm.doc.name || \"\",\r\n                    company: frm.doc.company,\r\n                    qty: row.qty,\r\n                },\r\n            });\r\n\r\n            if (resp.message) {\r\n                frappe.model.set_value(row.doctype, row.name, {\r\n                    item_name: resp.message.item_name,\r\n                    description: resp.message.description,\r\n                    stock_uom: resp.message.stock_uom,\r\n                    uom: resp.message.uom,\r\n                    conversion_factor: resp.message.conversion_factor,\r\n                    rate: resp.message.rate,\r\n                    amount: resp.message.amount,\r\n                });\r\n            }\r\n\r\n            // 4️⃣ Trigger ERPNext built-in logic for this row (but ONLY once)\r\n            await frm.script_manager.trigger(\"item_code\", row.doctype, row.name);\r\n        }\r\n\r\n        frm.refresh_field(\"items\");\r\n    }\r\n});\r\n",
+  "view": "Form"
+ }
+]
