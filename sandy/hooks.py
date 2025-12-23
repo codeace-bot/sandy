@@ -13,7 +13,8 @@ fixtures = [
         "filters": {
             "name": ["in", [
                 "BOM-custom_item_template",
-                "BOM-custom_is_template"
+                "BOM-custom_is_template",
+                "Item-custom_item_brand"
             ]]
         }
     },
