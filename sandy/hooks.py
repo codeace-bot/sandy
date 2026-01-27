@@ -21,10 +21,11 @@ fixtures = [
     {
         "doctype": "Client Script",
         "filters": {
-            "dt": ["=", "BOM"]
+            "dt": ["in", ["BOM", "Opportunity"]]
         }
     }
 ]
+
 
 
 # required_apps = []
