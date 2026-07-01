@@ -8,22 +8,9 @@ app_license = "mit"
 # Apps
 # ------------------
 fixtures = [
-    {
-        "doctype": "Custom Field",
-        "filters": {
-            "name": ["in", [
-                "BOM-custom_item_template",
-                "BOM-custom_is_template",
-                "Item-custom_item_brand"
-            ]]
-        }
-    },
-    {
-        "doctype": "Client Script",
-        "filters": {
-            "dt": ["in", ["BOM", "Opportunity"]]
-        }
-    }
+	{"doctype": "Custom Field", "filters": [["module", "=", "Sandy"]]},
+	{"doctype": "Property Setter", "filters": [["module", "=", "Sandy"]]},
+	{"doctype": "Client Script", "filters": [["module", "=", "Sandy"]]},
 ]
 
 
