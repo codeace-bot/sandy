@@ -36,7 +36,6 @@ class OvertimeEntry(Document):
         additional_salary.submit()
 
         self.db_set("status", "Salary Created")
-        self.db_set("additional_salary_ref", additional_salary.name)
 
     def set_standard_working_hours(self):
         if not self.gender:
