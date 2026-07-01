@@ -1,0 +1,299 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "OT-.YYYY.-.#####",
+ "creation": "2025-06-29 12:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee_section",
+  "employee",
+  "employee_name",
+  "gender",
+  "company",
+  "column_break_personal",
+  "department",
+  "designation",
+  "standard_working_hours",
+  "standard_working_days",
+  "overtime_details_section",
+  "overtime_date",
+  "overtime_type",
+  "overtime_time",
+  "column_break_overtime",
+  "base_salary",
+  "base_salary_per_hour",
+  "base_salary_per_minute",
+  "overtime_amount",
+  "adjust_amount",
+  "final_amount",
+  "salary_structure",
+  "overwrite_salary_structure_amount",
+  "status_section",
+  "status",
+  "remarks",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee_section",
+   "fieldtype": "Section Break",
+   "label": "Employee Details"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.gender",
+   "fieldname": "gender",
+   "fieldtype": "Data",
+   "label": "Gender",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_personal",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "label": "Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "standard_working_hours",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Standard Working Hours/Day"
+  },
+  {
+   "fieldname": "standard_working_days",
+   "fieldtype": "Int",
+   "label": "Standard Working Days/Month"
+  },
+  {
+   "fieldname": "overtime_details_section",
+   "fieldtype": "Section Break",
+   "label": "Overtime Details"
+  },
+  {
+   "fieldname": "overtime_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Payroll Date",
+   "reqd": 1
+  },
+  {
+   "default": "Hourly",
+   "fieldname": "overtime_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Overtime Type",
+   "options": "Hourly\nMinutely",
+   "reqd": 1
+  },
+  {
+   "fieldname": "overtime_time",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Overtime Time",
+   "non_negative": 1,
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_overtime",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "base_salary",
+   "fieldtype": "Currency",
+   "label": "Base Salary (Monthly)",
+   "options": "company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "base_salary_per_hour",
+   "fieldtype": "Currency",
+   "label": "Base Salary/Hour",
+   "options": "company:default_currency",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "base_salary_per_minute",
+   "fieldtype": "Currency",
+   "label": "Base Salary/Minute",
+   "options": "company:default_currency",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "overtime_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Overtime Amount (Double Charge)",
+   "options": "company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "adjust_amount",
+   "fieldtype": "Currency",
+   "label": "Adjust Amount",
+   "options": "company:default_currency"
+  },
+  {
+   "fieldname": "final_amount",
+   "fieldtype": "Currency",
+   "label": "Final Amount",
+   "options": "company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "salary_structure",
+   "fieldtype": "Link",
+   "label": "Salary Structure",
+   "options": "Salary Structure",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "overwrite_salary_structure_amount",
+   "fieldtype": "Check",
+   "label": "Overwrite Salary Structure Amount"
+  },
+  {
+   "fieldname": "status_section",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nSalary Created",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Overtime Entry",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [
+  {
+   "link_doctype": "Additional Salary",
+   "link_fieldname": "custom_overtime_entry"
+  }
+ ],
+ "modified": "2026-06-30 14:22:57.238920",
+ "modified_by": "Administrator",
+ "module": "Sandy",
+ "name": "Overtime Entry",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
