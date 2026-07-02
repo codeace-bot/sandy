@@ -92,7 +92,7 @@ class OvertimeEntry(Document):
         rate = flt(self.get(rate_field))
 
         if rate:
-            self.overtime_amount = math.ceil(flt(self.overtime_time) * rate * 2)
+            self.overtime_amount = math.ceil(flt(self.overtime_time) * rate * 1.5)
             self.final_amount = self.overtime_amount + flt(self.adjust_amount)
 
 

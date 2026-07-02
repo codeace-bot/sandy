@@ -164,7 +164,7 @@
    "fieldname": "overtime_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Overtime Amount (Double Charge)",
+   "label": "Overtime Amount (1.5x Charge)",
    "options": "company:default_currency",
    "read_only": 1
   },
