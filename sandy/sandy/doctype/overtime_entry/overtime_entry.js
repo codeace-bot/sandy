@@ -65,7 +65,7 @@ function calculate_overtime(frm) {
         ? frm.doc.base_salary_per_hour
         : frm.doc.base_salary_per_minute;
 
-    const amount = flt(frm.doc.overtime_time) * flt(rate) * 2;
+    const amount = flt(frm.doc.overtime_time) * flt(rate) * 1.5;
     frm.set_value('overtime_amount', amount);
     frm.set_value('final_amount', amount + flt(frm.doc.adjust_amount));
 }
