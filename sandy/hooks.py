@@ -155,23 +155,12 @@ fixtures = [
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"sandy.tasks.all"
-# 	],
-# 	"daily": [
-# 		"sandy.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"sandy.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"sandy.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"sandy.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"daily": [
+		"sandy.hrms_overrides.employee_reminders.send_birthday_reminders",
+		"sandy.hrms_overrides.employee_reminders.send_work_anniversary_reminders",
+	],
+}
 
 # Testing
 # -------
