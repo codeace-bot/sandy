@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-from frappe.utils import today
+from frappe.utils import add_to_date, today
 from frappe.utils.user import get_users_with_role
 from collections import defaultdict
 
@@ -27,7 +27,10 @@ def _send_employee_reminders(event_type):
     if not to_send:
         return
 
-    employees = frappe.db.sql(
+    today_date = today()
+    tomorrow_date = add_to_date(today_date, days=1)
+
+    employees_today = frappe.db.sql(
         f"""
         SELECT `employee_name` AS 'name', `company`
         FROM `tabEmployee`
@@ -37,16 +40,31 @@ def _send_employee_reminders(event_type):
         AND YEAR({condition_column}) < YEAR(%(today)s)
         AND `status` = 'Active'
         """,
-        dict(today=today()),
+        dict(today=today_date),
         as_dict=1,
     )
 
-    if not employees:
-        return
+    employees_tomorrow = frappe.db.sql(
+        f"""
+        SELECT `employee_name` AS 'name', `company`
+        FROM `tabEmployee`
+        WHERE
+            DAY({condition_column}) = DAY(%(tomorrow)s)
+        AND MONTH({condition_column}) = MONTH(%(tomorrow)s)
+        AND YEAR({condition_column}) < YEAR(%(tomorrow)s)
+        AND `status` = 'Active'
+        """,
+        dict(tomorrow=tomorrow_date),
+        as_dict=1,
+    )
 
-    grouped = defaultdict(list)
-    for emp in employees:
-        grouped[emp["company"]].append(emp["name"])
+    grouped_today = defaultdict(list)
+    for emp in employees_today:
+        grouped_today[emp["company"]].append(emp["name"])
+
+    grouped_tomorrow = defaultdict(list)
+    for emp in employees_tomorrow:
+        grouped_tomorrow[emp["company"]].append(emp["name"])
 
     hr_users = _get_hr_users()
 
@@ -54,15 +72,25 @@ def _send_employee_reminders(event_type):
         return
 
     today_str = today()
-    for company, names in grouped.items():
+    for company, names in grouped_today.items():
         subject = _get_subject(event_type, names)
         for user in hr_users:
             if not _notification_exists(user, subject, today_str):
                 _create_notification_log(for_user=user, subject=subject, link="/app/employee")
 
+    for company, names in grouped_tomorrow.items():
+        subject = _get_subject(event_type, names, days_before=1)
+        for user in hr_users:
+            if not _notification_exists(user, subject, today_str):
+                _create_notification_log(for_user=user, subject=subject, link="/app/employee")
 
-def _get_subject(event_type, employee_names):
+
+def _get_subject(event_type, employee_names, days_before=0):
     names_text = ", ".join(employee_names)
+    if days_before == 1:
+        if event_type == "birthday":
+            return _("🎂 Tomorrow's Birthdays: {0}").format(names_text)
+        return _("🎉 Tomorrow's Work Anniversaries: {0}").format(names_text)
     if event_type == "birthday":
         return _("🎂 Today's Birthdays: {0}").format(names_text)
     return _("🎉 Today's Work Anniversaries: {0}").format(names_text)
