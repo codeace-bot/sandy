@@ -121,3 +121,9 @@ def _notification_exists(for_user, subject, date):
         "subject": subject,
         "creation": ["like", f"{date}%"],
     })
+
+
+@frappe.whitelist()
+def test_employee_reminders():
+    send_birthday_reminders()
+    send_work_anniversary_reminders()
